@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mag | Pro</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            /* --- PALETA DARK MINIMALISTA --- */
+            --bg-app: #09090b; --bg-card: #18181b; --bg-input: #27272a; --bg-hover: #3f3f46;
+            --text-primary: #f4f4f5; --text-secondary: #a1a1aa;
+            --accent: #f97316; --accent-hover: #ea580c;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --info: #3b82f6; --purple: #8b5cf6;
+            --border: #3f3f46; --radius: 8px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
+        body { background-color: var(--bg-app); color: var(--text-primary); display: flex; justify-content: center; min-height: 100vh; padding: 2rem; }
+        .app-container { max-width: 1200px; width: 100%; }
+        .hidden { display: none !important; }
+        button { cursor: pointer; transition: all 0.2s ease; border: none; }
+
+        /* TELA DE LOGIN (NOVO) */
+        #view-login {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-app); z-index: 2000;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .login-card {
+            background: var(--bg-card); padding: 3rem; border-radius: 16px;
+            border: 1px solid var(--border); text-align: center; width: 400px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .login-card img { height: 60px; margin-bottom: 1.5rem; }
+        .btn-google {
+            background: white; color: #333; width: 100%; padding: 1rem;
+            border-radius: 8px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 1rem;
+            margin-top: 2rem; font-size: 1rem;
+        }
+        .btn-google:hover { background: #f1f1f1; }
+
+        /* PERFIL DO USUÁRIO */
+        .user-profile { display: flex; align-items: center; gap: 1rem; background: var(--bg-input); padding: 0.5rem; border-radius: 50px; border: 1px solid var(--border); }
+        .user-avatar { width: 48px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .user-name { font-size: 0.9rem; font-weight: 500; }
+        .btn-logout { background: transparent; color: var(--danger); font-size: 1.2rem; display: flex; }
+
+        /* HEADER */
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+        .page-header h1 { font-size: 1.6rem; font-weight: 600; display: flex; align-items: center; gap: 1rem; }
+        .page-header img { height: 48px; }
+        .breadcrumb { font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        
+        /* INPUTS */
+        input, select, textarea { background-color: var(--bg-input); border: 1px solid transparent; color: white; padding: 0.75rem 1rem; border-radius: var(--radius); width: 100%; font-size: 0.95rem; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2); }
+        .search-bar { width: 100%; max-width: 450px; background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 2rem; }
+
+        /* GRID E LISTAS */
+        .clients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .client-folder { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; gap: 1rem; position: relative; }
+        .client-folder:hover { transform: translateY(-4px); border-color: var(--accent); }
+        
+        .list-container { display: flex; flex-direction: column; gap: 0.8rem; }
+        .list-item { background: var(--bg-card); padding: 1.2rem; border-radius: var(--radius); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+        .list-item:hover { border-color: var(--text-secondary); background: var(--bg-hover); }
+        
+        /* ABAS */
+        .tabs-container { display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+        .tab-btn { background: transparent; color: var(--text-secondary); padding: 0.8rem 1.5rem; font-weight: 600; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        /* BADGES */
+        .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+        .badge-open { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .badge-approved { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-production { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+        .badge-ready { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
+        .badge-canceled { background: rgba(113, 113, 122, 0.2); color: #a1a1aa; text-decoration: line-through; }
+        .badge-history { background: #27272a; color: #a1a1aa; border: 1px solid #3f3f46; }
+
+        /* EDITOR */
+        .editor-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 2rem; }
+        .card { background-color: var(--bg-card); border-radius: 12px; padding: 2rem; border: 1px solid var(--border); }
+        .input-group-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem; }
+        .three-cols { grid-template-columns: 1fr 1fr 1fr; }
+        .input-box { display: flex; flex-direction: column; gap: 0.5rem; }
+        label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; }
+
+        /* HISTÓRICO TIMELINE */
+        .history-section { margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem; }
+        .history-item { display: flex; gap: 1rem; padding: 1rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.8rem; cursor: pointer; transition: 0.2s; }
+        .history-item:hover { border-color: var(--text-secondary); }
+        .history-item.current { border-left: 3px solid var(--accent); background: rgba(249, 115, 22, 0.05); cursor: default; }
+        .history-meta { min-width: 140px; font-size: 0.85rem; color: var(--text-secondary); }
+        .history-content h5 { font-size: 1rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary); }
+        .history-reason { font-size: 0.9rem; color: var(--text-secondary); font-style: italic; margin-top: 0.3rem; }
+
+        /* ALERT BOX (DESCRIÇÃO) */
+        .alert-box { background: rgba(59, 130, 246, 0.1); border: 1px solid var(--info); color: var(--info); padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: flex-start; }
+
+        /* BOTÕES */
+        .btn-action { padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 600; display: flex; gap: 0.5rem; align-items: center; font-size: 0.9rem; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-secondary { background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .btn-purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+        .btn-purple:hover { background: var(--purple); color: white; }
+        .btn-insert { width: 100%; justify-content: center; background: var(--text-primary); color: var(--bg-app); padding: 1rem; font-weight: 800; margin-top: 1rem; }
+        .btn-insert.editing { background-color: var(--warning); color: black; }
+        
+        /* LOADING */
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 999; backdrop-filter: blur(2px); }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--bg-hover); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* MODAL */
+        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:flex; justify-content:center; align-items:center; z-index:100; }
+        .modal-content { background: var(--bg-card); padding: 2.5rem; border-radius: 16px; width: 450px; border: 1px solid var(--border); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+        th { text-align: left; padding: 1rem; background: var(--bg-input); color: var(--text-secondary); }
+        td { padding: 1rem; border-bottom: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay"><div class="spinner"></div></div>
+
+    <section id="view-login">
+        <div class="login-card">
+            <img src="../sistema_orcamentos/images/MAG_Logo.png" alt="Logo">
+            <h2>Bem-vindo</h2>
+            <p style="color:var(--text-secondary)">Faça login para acessar o sistema</p>
+            <button class="btn-google" onclick="app.loginGoogle()">
+                <i class="ph ph-google-logo" style="font-size:1.2rem"></i> Entrar com Google
+            </button>
+        </div>
+    </section>
+
+    <div class="app-container hidden" id="main-app">
+
+        <section id="view-home">
+            <div class="page-header">
+                <h1><img src="../sistema_orcamentos/images/MAG_Logo.png" alt="">Mag | Sistema</h1>
+                
+                <div style="display:flex; gap:1rem; align-items:center">
+                    <div class="user-profile">
+                        <img src="" id="user-photo" class="user-avatar">
+                        <span id="user-name" class="user-name">...</span>
+                        <button class="btn-logout" onclick="app.logoutGoogle()" title="Sair"><i class="ph ph-sign-out"></i></button>
+                    </div>
+                    <button class="btn-action btn-primary" onclick="abrirModalCliente()">
+                        <i class="ph ph-plus-bold"></i> Novo Cliente
+                    </button>
+                </div>
+            </div>
+            <input type="text" class="search-bar" placeholder="Buscar cliente..." onkeyup="filtrarClientes(this.value)">
+            <div class="clients-grid" id="grid-clientes"></div>
+        </section>
+
+        <section id="view-client-details" class="hidden">
+            <div class="page-header">
+                <div>
+                    <div class="breadcrumb">
+                        <span onclick="app.irParaHome()" style="cursor:pointer; text-decoration:underline">Clientes</span> 
+                        <i class="ph ph-caret-right"></i> 
+                        <strong id="titulo-cliente-nome">---</strong>
+                    </div>
+                    <h1>Gestão do Cliente</h1>
+                    <div style="font-size:0.9rem; color:var(--text-secondary); margin-top:0.5rem" id="cliente-info-detalhe"></div>
+                </div>
+                <div style="display:flex; gap:0.8rem">
+                    <button class="btn-action btn-secondary" onclick="app.irParaHome()">Voltar</button>
+                    <button class="btn-action btn-secondary" onclick="app.editarClienteAtual()">
+                        <i class="ph ph-pencil-simple"></i> Editar Dados
+                    </button>
+                    <button class="btn-action btn-success" onclick="app.criarNovoOrcamento()">
+                        <i class="ph ph-file-plus-bold"></i> Novo Orçamento
+                    </button>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:1rem; margin-bottom: 1.5rem; align-items:center">
+                <div class="search-bar" style="margin-bottom:0; flex:1; display:flex; align-items:center; background:var(--bg-input); padding:0 1rem;">
+                    <i class="ph ph-magnifying-glass" style="color:var(--text-secondary)"></i>
+                    <input type="number" id="input-busca-trabalho" placeholder="Buscar pelo Nº do Pedido ou Orçamento..." 
+                        style="border:none; background:transparent;" onchange="app.executarBuscaTrabalho()">
+                    <i class="ph ph-x" style="cursor:pointer; color:var(--text-secondary)" onclick="app.limparBuscaTrabalho()" title="Limpar busca"></i>
+                </div>
+            </div>
+
+            <div class="tabs-container">
+                <button class="tab-btn active" onclick="app.mudarAba('orcamentos')" id="tab-orcamentos">Orçamentos</button>
+                <button class="tab-btn" onclick="app.mudarAba('pedidos')" id="tab-pedidos">Pedidos</button>
+            </div>
+
+            <div id="view-tab-orcamentos">
+                <div id="content-orcamentos" class="list-container"></div>
+                <div id="btn-load-more-orc" style="text-align:center; margin-top:1rem;" class="hidden">
+                    <button class="btn-action btn-secondary" onclick="app.carregarMais('orcamento')" style="width:100%; justify-content:center">
+                        <i class="ph ph-caret-down"></i> Carregar Mais Orçamentos
+                    </button>
+                </div>
+            </div>
+
+            <div id="view-tab-pedidos" class="hidden">
+                <div id="content-pedidos" class="list-container"></div>
+                <div id="btn-load-more-ped" style="text-align:center; margin-top:1rem;" class="hidden">
+                    <button class="btn-action btn-secondary" onclick="app.carregarMais('pedido')" style="width:100%; justify-content:center">
+                        <i class="ph ph-caret-down"></i> Carregar Mais Pedidos
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-editor" class="hidden">
+            <div class="page-header">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="breadcrumb">
+                        <span onclick="app.voltarParaCliente()" style="cursor:pointer; text-decoration:underline" id="bread-cliente">---</span>
+                        <i class="ph ph-caret-right"></i>
+                        <span id="bread-tipo">Editor</span>
+                    </div>
+                </div>
+                
+                <div style="display:flex; gap:1rem; align-items: center;" id="editor-actions">
+                    <h2 id="titulo_visual_id" style="color: var(--accent); margin-right: 1rem;">---</h2>
+                </div>
+            </div>
+
+            <div class="editor-grid">
+                <div class="card" id="card-formulario">
+                    
+                    <div id="box-motivo-visualizacao" class="alert-box hidden">
+                        <i class="ph ph-info" style="font-size:1.5rem"></i>
+                        <div>
+                            <strong style="display:block; margin-bottom:0.2rem">Descrição / Motivo:</strong>
+                            <span id="texto-motivo-visualizacao">---</span>
+                        </div>
+                    </div>
+
+                    <div style="background: var(--bg-input); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--border);">
+                        <div class="input-box">
+                            <label style="color:var(--accent);">Valor Corte / Serviço (R$)</label>
+                            <input type="number" id="valor_corte_geral" placeholder="0.00" style="font-size: 1.2rem; font-weight: bold;" oninput="app.recalcularComCorte()">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 1.5rem;">
+                        <h3 style="color:var(--text-primary); display:flex; align-items:center; gap:0.5rem">
+                            <i class="ph ph-pencil-simple-line" style="color:var(--accent)"></i> Itens
+                        </h3>
+                    </div>
+                    
+                    <form id="calcForm" onsubmit="return false;">
+                        <div class="input-group-row">
+                            <div class="input-box"><label>Peça / Descrição</label><input type="text" id="peca_nome"></div>
+                            <div class="input-box"><label>Código</label><input type="text" id="peca_cod"></div>
+                        </div>
+
+                        <div class="input-group-row">
+                            <div class="input-box"><label>Material</label>
+                                <select id="material_tipo">
+                                    <option value="7.85">Aço Carbono</option><option value="7.90">Aço Inox</option><option value="2.70">Alumínio</option>
+                                </select>
+                            </div>
+                            <div class="input-box"><label>Espessura</label><select id="espessura"></select></div>
+                        </div>
+                        <div class="input-group-row">
+                            <div class="input-box"><label>Largura (mm)</label><input type="number" id="largura" oninput="app.atualizarPreview()"></div>
+                            <div class="input-box"><label>Comprimento (mm)</label><input type="number" id="comprimento" oninput="app.atualizarPreview()"></div>
+                        </div>
+                        <div class="input-group-row three-cols">
+                            <div class="input-box"><label>Qtd</label><input type="number" id="quantidade" value="1" oninput="app.atualizarPreview()"></div>
+                            <div class="input-box"><label>Perda %</label><input type="number" id="perda" value="5" oninput="app.atualizarPreview()"></div>
+                            <div class="input-box"><label>R$/kg</label><input type="number" id="valor_kg" oninput="app.atualizarPreview()"></div>
+                        </div>
+                        <div class="realtime-preview"><small>Valor Item</small><span id="preview-valor">R$ 0,00</span></div>
+                        
+                        <div style="display:flex; gap:1rem; margin-top: 1rem;">
+                            <button id="btn-cancelar-edicao" class="btn-insert hidden" style="background:transparent; border:1px solid var(--border); color:var(--text-secondary); width:30%;" onclick="app.cancelarEdicaoItem()">
+                                CANCELAR
+                            </button>
+                            <button id="btn-submit-item" class="btn-insert" onclick="app.processarItem()">
+                                <i class="ph ph-plus-circle-bold"></i> INSERIR ITEM
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap: 1.5rem;">
+                    
+                    <div class="card" style="display:flex; flex-direction:column; max-height: 700px;">
+                        <h3 style="margin-bottom:1.5rem; color:var(--text-primary)">Resumo</h3>
+                        <div style="flex:1; overflow-y:auto;">
+                            <table>
+                                <thead><tr><th>Desc</th><th>Qtd</th><th>Total</th><th id="col-actions"></th></tr></thead>
+                                <tbody id="tabela-itens"></tbody>
+                            </table>
+                        </div>
+                        <div style="margin-top:1.5rem; border-top:1px solid var(--border); padding-top:1.5rem; text-align:right">
+                            <small style="color:var(--text-secondary)" id="display-servico"></small><br>
+                            <small style="color:var(--text-secondary); font-size: 0.9rem;">TOTAL GERAL</small><br>
+                            <span id="geral_valor" style="font-size:2.5rem; color:var(--success); font-weight:800">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <div id="historico-container" class="hidden">
+                        <h4 style="margin-bottom:1rem; color:var(--text-secondary); font-size:0.9rem; text-transform:uppercase; padding-left:0.5rem">Linha do Tempo do Pedido</h4>
+                        <div id="historico-lista">
+                            </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="modal-cliente" class="hidden modal">
+        <div class="modal-content">
+            <h3 id="modal-titulo-cliente">Dados da Empresa</h3>
+            <div class="input-box" style="margin-top:1rem"><label>Nome da Empresa</label><input type="text" id="cli_nome"></div>
+            <div class="input-box" style="margin-top:1rem"><label>E-mail</label><input type="email" id="cli_email"></div>
+            <div class="input-box" style="margin-top:1rem; margin-bottom:2rem"><label>Telefone / WhatsApp</label><input type="text" id="cli_telefone"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center">
+                <button id="btn-excluir-cliente-modal" class="btn-action btn-danger hidden" onclick="app.excluirClienteAtual()">
+                    <i class="ph ph-trash"></i> Excluir
+                </button>
+                <div style="display:flex; gap:1rem">
+                    <button class="btn-action btn-secondary" onclick="fecharModalCliente()">Cancelar</button>
+                    <button class="btn-action btn-primary" onclick="app.salvarCliente()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-revisao" class="hidden modal">
+        <div class="modal-content">
+            <h3 id="titulo-modal-motivo">Informação Necessária</h3>
+            <p style="color:var(--text-secondary); margin-bottom:1rem; font-size:0.9rem">Descreva o motivo desta operação:</p>
+            <div class="input-box">
+                <label>Descrição / Motivo</label>
+                <textarea id="revisao_motivo" rows="3" placeholder="Ex: Alteração de quantidade, Atualização de preço..." style="width:100%; background:var(--bg-input); color:white; padding:0.8rem; border-radius:var(--radius); border:none;"></textarea>
+            </div>
+            <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:2rem">
+                <button class="btn-action btn-secondary" onclick="document.getElementById('modal-revisao').classList.add('hidden')">Cancelar</button>
+                <button class="btn-action btn-primary" onclick="app.confirmarAcaoModal()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { onSnapshot, getFirestore, collection, setDoc, getDocs, doc, deleteDoc, updateDoc, query, where, orderBy, runTransaction, serverTimestamp } 
+        from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } 
+        from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { limit, or, and } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBUiyLpgZICMXq0nKEctwlHsNI1shLoR3Q",
+            authDomain: "meu-projeto-web-6e845.firebaseapp.com",
+            projectId: "meu-projeto-web-6e845",
+            storageBucket: "meu-projeto-web-6e845.firebasestorage.app",
+            messagingSenderId: "654986756234",
+            appId: "1:654986756234:web:4b9a6e770e12f3fba9ad73",
+            measurementId: "G-LQV08LSPH7"
+        };
+
+        const appFirebase = initializeApp(firebaseConfig);
+        const db = getFirestore(appFirebase);
+        // --- INICIALIZAÇÃO AUTH ---
+        const auth = getAuth(appFirebase);
+        const provider = new GoogleAuthProvider();
+
+        // ESTA É A MÁGICA: Força o Google a perguntar qual conta usar
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
+        const ROOT_PATH = "mag/sistema_orcamentos";
+        const EMAIL_MESTRE = "erick.cba@gmail.com";
+        const LIMITE_ITENS = 100;
+
+        let estado = {
+            clientes: [], orcamentos: [], pedidos: [],
+            clienteAtivo: null, trabalhoAtivo: null,
+            itemEmEdicaoId: null, tipoVisualizacao: 'orcamentos',
+            modoLeitura: false, clienteEmEdicaoId: null,
+            editandoRevisao: false, motivoRevisaoTemporario: "",
+            user: null,
+            temAlteracoesNaoSalvas: false,
+            limiteOrcamentos: LIMITE_ITENS,
+            limitePedidos: LIMITE_ITENS,
+            termoBusca: null,
+        };
+        let unsubClientes = null;    // Controle da lista de clientes
+        let unsubOrcamentos = null;  // Controle da lista de orçamentos
+        let unsubPedidos = null;     // Controle da lista de pedidos
+        let unsubEditor = null; // Controle de escuta do item aberto
+        let unsubHistorico = null; // Controle do listener do histórico
+
+        // --- AUTH LISTENER (VIGIA DO LOGIN) ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // 1. LISTA DE QUEM PODE ENTRAR (EDITE AQUI)
+                const EMAILS_PERMITIDOS = [
+                    "vendedor1@gmail.com",
+                    "vendedor2@gmail.com",
+                    "guilhermenestor.av@gmail.com",
+                    "g.araujoveroneze@gmail.com"
+                ];
+
+                // 2. VERIFICAÇÃO DE SEGURANÇA
+                if (!EMAILS_PERMITIDOS.includes(user.email)) {
+                    alert(`ACESSO NEGADO.\nO e-mail ${user.email} não tem permissão para acessar o sistema.`);
+                    signOut(auth); // Desloga o intruso imediatamente
+                    return; // Para o código aqui
+                }
+
+                // Se passou da verificação, continua o login normal:
+                estado.user = user;
+                document.getElementById('view-login').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                
+                document.getElementById('user-photo').src = user.photoURL;
+                document.getElementById('user-name').innerText = user.displayName.split(' ')[0];
+                
+                popularEspessuras();
+                dbCarregarClientes();
+            } else {
+                estado.user = null;
+                document.getElementById('view-login').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('hidden');
+            }
+        });
+
+        // --- DATABASE CORE ---
+        async function getProximoId(tipo) {
+            const contadorRef = doc(db, `${ROOT_PATH}/counters`, "geral");
+            try {
+                const novoId = await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(contadorRef);
+                    const campo = tipo === 'pedido' ? 'seq_pedido' : (tipo === 'cliente' ? 'seq_cliente' : 'seq_orcamento');
+                    if (!sfDoc.exists()) {
+                        const initialData = { seq_orcamento: 0, seq_pedido: 0, seq_cliente: 0 };
+                        initialData[campo] = 1;
+                        transaction.set(contadorRef, initialData);
+                        return 1;
+                    } else {
+                        const data = sfDoc.data();
+                        const nextId = (data[campo] || 0) + 1;
+                        transaction.update(contadorRef, { [campo]: nextId });
+                        return nextId;
+                    }
+                });
+                return novoId;
+            } catch (e) { console.error(e); throw e; }
+        }
+
+        async function decrementarId(tipo) {
+            const contadorRef = doc(db, `${ROOT_PATH}/counters`, "geral");
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(contadorRef);
+                    if (sfDoc.exists()) {
+                        const data = sfDoc.data();
+                        let campo = tipo === 'cliente' ? 'seq_cliente' : (tipo === 'pedido' ? 'seq_pedido' : 'seq_orcamento');
+                        const valorAtual = data[campo] || 0;
+                        if (valorAtual > 0) transaction.update(contadorRef, { [campo]: valorAtual - 1 });
+                    }
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function dbCarregarClientes() {
+            setLoading(true);
+            const q = query(collection(db, `${ROOT_PATH}/clientes`), orderBy("nome"));
+            
+            // Se já existir uma escuta ativa, desliga ela antes de criar outra
+            if (unsubClientes) unsubClientes();
+
+            // Inicia escuta em tempo real
+            unsubClientes = onSnapshot(q, (snapshot) => {
+                estado.clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderizarClientes();
+                setLoading(false);
+            }, (error) => {
+                console.error("Erro ao buscar clientes:", error);
+                setLoading(false);
+            });
+        }
+
+        async function dbCarregarDadosCliente(clienteId) {
+            setLoading(true);
+            
+            if (unsubOrcamentos) unsubOrcamentos();
+            if (unsubPedidos) unsubPedidos();
+
+            // FILTROS DE SEGURANÇA (Mestre/Vendedor)
+            const souMestre = estado.user.email === EMAIL_MESTRE;
+            const meuEmail = estado.user.email;
+            let baseFiltro = where("cliente_id", "==", clienteId);
+            
+            let filtroVendedor = null;
+            if (!souMestre) {
+                filtroVendedor = or(
+                    where("vendedor_email", "==", meuEmail),
+                    where("vendedor_original_email", "==", meuEmail)
+                );
+            }
+
+            try {
+                // --- 1. PREPARAÇÃO DA CONSULTA COM 'AND' ---
+                let filtroFinal;
+                if (filtroVendedor) {
+                    filtroFinal = and(baseFiltro, filtroVendedor);
+                } else {
+                    filtroFinal = baseFiltro;
+                }
+
+                // --- 2. VERIFICAÇÃO DE BUSCA (Se tiver número no input) ---
+                let filtrosOrc = [collection(db, `${ROOT_PATH}/orcamentos`), orderBy("data_criacao", "desc")];
+                let filtrosPed = [collection(db, `${ROOT_PATH}/pedidos`), orderBy("data_criacao", "desc")];
+
+                if (estado.termoBusca) {
+                    // MODO BUSCA: Ignora paginação e foca no ID Específico
+                    // Note que precisamos manter o 'filtroFinal' para garantir que o usuário só busque o que tem permissão
+                    const buscaId = parseInt(estado.termoBusca);
+                    
+                    // Sobrescreve a lógica padrão para focar no ID
+                    // Usamos 'and' para juntar: (Permissões do Cliente/Vendedor) AND (id_visual == busca)
+                    const queryBusca = and(filtroFinal, where("id_visual", "==", buscaId));
+                    
+                    filtrosOrc = [collection(db, `${ROOT_PATH}/orcamentos`), queryBusca];
+                    filtrosPed = [collection(db, `${ROOT_PATH}/pedidos`), queryBusca];
+                    
+                    // Esconde botões de carregar mais durante a busca
+                    document.getElementById('btn-load-more-orc').classList.add('hidden');
+                    document.getElementById('btn-load-more-ped').classList.add('hidden');
+
+                } else {
+                    // MODO LISTA NORMAL (Com Paginação)
+                    filtrosOrc.push(filtroFinal);
+                    filtrosOrc.push(limit(estado.limiteOrcamentos)); // Usa limite dinâmico
+
+                    filtrosPed.push(filtroFinal);
+                    filtrosPed.push(limit(estado.limitePedidos)); // Usa limite dinâmico
+                    
+                    // Mostra botões de carregar mais
+                    document.getElementById('btn-load-more-orc').classList.remove('hidden');
+                    document.getElementById('btn-load-more-ped').classList.remove('hidden');
+                }
+
+                // --- 3. EXECUÇÃO DAS QUERIES ---
+                
+                // ORÇAMENTOS
+                const qOrc = query(...filtrosOrc);
+                unsubOrcamentos = onSnapshot(qOrc, (snapshot) => {
+                    estado.orcamentos = snapshot.docs.map(d => ({ firebaseId: d.id, ...d.data() }));
+                    renderizarListasCliente();
+                    
+                    // Se carregou menos itens que o limite, esconde o botão "Carregar Mais" (chegou no fim)
+                    if(estado.orcamentos.length < estado.limiteOrcamentos && !estado.termoBusca) {
+                        document.getElementById('btn-load-more-orc').classList.add('hidden');
+                    }
+                }, (error) => { console.error("Erro Orcamentos:", error); if(error.message.includes("index")) alert("Índice necessário (Ver Console)"); });
+
+                // PEDIDOS
+                const qPed = query(...filtrosPed);
+                unsubPedidos = onSnapshot(qPed, (snapshot) => {
+                    estado.pedidos = snapshot.docs.map(d => ({ firebaseId: d.id, ...d.data() }));
+                    renderizarListasCliente();
+                    setLoading(false);
+                    
+                    if(estado.pedidos.length < estado.limitePedidos && !estado.termoBusca) {
+                        document.getElementById('btn-load-more-ped').classList.add('hidden');
+                    }
+                }, (error) => { console.error("Erro Pedidos:", error); setLoading(false); });
+
+            } catch (e) {
+                console.error("Erro geral:", e);
+                setLoading(false);
+            }
+        }
+        
+        async function dbSalvarOrcamento(orcamento) {
+            setLoading(true);
+            
+            // 1. DETECTA SE É UM NOVO RASCUNHO (Antes de salvar)
+            const isNovoRascunho = !orcamento.firebaseId;
+
+            // LÓGICA DO VENDEDOR ORIGINAL (Mantida)
+            if (!orcamento.vendedor_original_email) {
+                orcamento.vendedor_original_email = orcamento.vendedor_email || estado.user.email;
+            }
+
+            orcamento.vendedor_email = estado.user.email;
+            orcamento.vendedor_nome = estado.user.displayName;
+
+            try {
+                if (isNovoRascunho) {
+                    // CRIAÇÃO (NOVO)
+                    const idVisual = await getProximoId('orcamento');
+                    orcamento.id_visual = idVisual;
+                    orcamento.data_criacao = serverTimestamp();
+                    orcamento.status = "ABERTO";
+                    const docId = String(idVisual);
+                    await setDoc(doc(db, `${ROOT_PATH}/orcamentos`, docId), orcamento);
+                    orcamento.firebaseId = docId;
+                } else {
+                    // ATUALIZAÇÃO (EXISTENTE)
+                    const docRef = doc(db, `${ROOT_PATH}/orcamentos`, orcamento.firebaseId);
+                    await updateDoc(docRef, { 
+                        itens: orcamento.itens, 
+                        total: orcamento.total, 
+                        valor_corte: orcamento.valor_corte,
+                        vendedor_email: estado.user.email, 
+                        vendedor_original_email: orcamento.vendedor_original_email 
+                    });
+                }
+                
+                estado.temAlteracoesNaoSalvas = false;
+                alert("Salvo com sucesso!");
+                
+                // --- AQUI ESTÁ A MUDANÇA ---
+                if (isNovoRascunho) {
+                    // Se acabou de criar, volta para a lista do cliente
+                    voltarParaCliente();
+                } else {
+                    // Se estava apenas editando um existente, mantém na tela
+                    atualizarEditorUI(); 
+                }
+
+            } catch (e) { 
+                console.error(e); 
+                alert("Erro: " + e.message); 
+            } finally { 
+                setLoading(false); 
+            }
+        }
+
+        async function dbGerarPedido(orcamentoOrigem) { // O parametro serve só para pegar o ID
+            if(!confirm(`Confirma a aprovação e geração do pedido?`)) return;
+            setLoading(true);
+
+            const orcamentoRef = doc(db, `${ROOT_PATH}/orcamentos`, orcamentoOrigem.firebaseId);
+            const contadorRef = doc(db, `${ROOT_PATH}/counters`, "geral");
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    // 1. LER DADOS FRESCOS (A verdade está no banco, não na tela)
+                    const orcDoc = await transaction.get(orcamentoRef);
+                    if (!orcDoc.exists()) throw "Orçamento não encontrado!";
+                    
+                    const orcamentoAtualizado = orcDoc.data();
+
+                    // Verificação de segurança: Se já foi aprovado, não deixa duplicar
+                    if (orcamentoAtualizado.status === 'APROVADO') {
+                        throw "Este orçamento JÁ foi aprovado anteriormente!";
+                    }
+
+                    // 2. OBTER PRÓXIMO ID (Dentro da transação para não pular número)
+                    const counterDoc = await transaction.get(contadorRef);
+                    let novoIdPedido = 1;
+                    if (counterDoc.exists()) {
+                        novoIdPedido = (counterDoc.data().seq_pedido || 0) + 1;
+                    }
+                    transaction.set(contadorRef, { seq_pedido: novoIdPedido }, { merge: true });
+
+                    // 3. MONTAR O PEDIDO (Usando os dados LIDOS do banco)
+                    // Lógica de preservar o dono original:
+                    const originalEmail = orcamentoAtualizado.vendedor_original_email || orcamentoAtualizado.vendedor_email;
+
+                    const novoPedido = {
+                        id_visual: novoIdPedido,
+                        origem_orcamento_id: orcamentoAtualizado.id_visual,
+                        cliente_id: orcamentoAtualizado.cliente_id,
+                        cliente_nome: orcamentoAtualizado.cliente_nome,
+                        
+                        // IMPORTANTE: Aqui usamos orcamentoAtualizado (do banco), não orcamentoOrigem (da tela)
+                        itens: orcamentoAtualizado.itens,
+                        total: orcamentoAtualizado.total,
+                        valor_corte: orcamentoAtualizado.valor_corte || 0,
+                        
+                        data_criacao: serverTimestamp(),
+                        status: "EM_PRODUCAO",
+                        
+                        // Rastreio
+                        vendedor_original_email: originalEmail,
+                        vendedor_email: estado.user.email, // Quem clicou no botão (Admin/Chefe)
+                        vendedor_nome: estado.user.displayName
+                    };
+
+                    // 4. GRAVAR TUDO ATOMICAMENTE
+                    const novoPedidoRef = doc(db, `${ROOT_PATH}/pedidos`, String(novoIdPedido));
+                    
+                    transaction.set(novoPedidoRef, novoPedido);
+                    transaction.update(orcamentoRef, { status: "APROVADO" });
+                    
+                    // Retornamos o ID para usar no alert fora da transação
+                    return novoIdPedido;
+                }).then((idGerado) => {
+                    alert(`Sucesso! Pedido #${idGerado} gerado com os dados mais recentes.`);
+                    dbCarregarDadosCliente(estado.clienteAtivo.id);
+                    voltarParaCliente();
+                });
+
+            } catch (e) {
+                console.error(e);
+                // Se o erro for nosso throw personalizado, mostra ele. Senão, erro genérico.
+                alert("Erro ao gerar pedido: " + (typeof e === 'string' ? e : e.message));
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function dbCancelarComMotivo(trabalho, motivo) {
+            setLoading(true);
+            try {
+                const colecao = trabalho.origem_orcamento_id ? 'pedidos' : 'orcamentos';
+                const docRef = doc(db, `${ROOT_PATH}/${colecao}`, trabalho.firebaseId);
+                
+                await updateDoc(docRef, { 
+                    status: "CANCELADO",
+                    motivo_cancelamento: motivo,
+                    cancelado_por: estado.user.email,
+                    data_cancelamento: serverTimestamp()
+                });
+                
+                alert("Documento cancelado com sucesso.");
+                await dbCarregarDadosCliente(estado.clienteAtivo.id);
+                voltarParaCliente();
+                
+            } catch(e) { 
+                console.error(e); 
+                alert("Erro ao cancelar: " + e.message); 
+            } finally { 
+                setLoading(false); 
+            }
+        }
+
+        async function dbAlterarStatus(tipo, idDoc, novoStatus) {
+            if(!confirm(`Confirmar alteração de status para: ${novoStatus}?`)) return;
+            setLoading(true);
+            try {
+                const colecao = tipo === 'orcamento' ? 'orcamentos' : 'pedidos';
+                const docRef = doc(db, `${ROOT_PATH}/${colecao}`, idDoc);
+                await updateDoc(docRef, { status: novoStatus });
+                await dbCarregarDadosCliente(estado.clienteAtivo.id);
+                voltarParaCliente();
+            } catch(e) { console.error(e); alert("Erro ao mudar status"); } finally { setLoading(false); }
+        }
+
+        // --- FUNÇÕES DE REVISÃO E HISTÓRICO ---
+
+        async function dbGerarRevisao(pedidoAtual, motivo) {
+            setLoading(true);
+            try {
+                let proximaRev = 'A';
+                if (pedidoAtual.revisao) {
+                    proximaRev = String.fromCharCode(pedidoAtual.revisao.charCodeAt(0) + 1);
+                }
+
+                const docRefAntigo = doc(db, `${ROOT_PATH}/pedidos`, pedidoAtual.firebaseId);
+                await updateDoc(docRefAntigo, { status: "HISTORICO" });
+
+                const novoPedido = JSON.parse(JSON.stringify(pedidoAtual));
+                novoPedido.revisao = proximaRev;
+                novoPedido.data_criacao = serverTimestamp();
+                novoPedido.status = "EM_PRODUCAO";
+                novoPedido.motivo_substituicao = motivo;
+                
+                // LÓGICA DE PRESERVAÇÃO
+                // Se o pedido antigo não tinha o campo 'original', o 'vendedor_email' dele ERA o original.
+                if (!novoPedido.vendedor_original_email) {
+                    novoPedido.vendedor_original_email = pedidoAtual.vendedor_email;
+                }
+                
+                // Atualiza quem está fazendo a revisão agora
+                novoPedido.vendedor_email = estado.user.email;
+                novoPedido.vendedor_nome = estado.user.displayName;
+                
+                delete novoPedido.firebaseId; 
+                
+                const novoDocId = `${pedidoAtual.id_visual}_${proximaRev}`;
+                await setDoc(doc(db, `${ROOT_PATH}/pedidos`, novoDocId), novoPedido);
+
+                alert(`Revisão ${proximaRev} salva com sucesso!`);
+                await dbCarregarDadosCliente(estado.clienteAtivo.id);
+                voltarParaCliente();
+
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao criar revisão: " + e.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // --- NOVA FUNÇÃO: REVISÃO DE ORÇAMENTO ---
+        async function dbGerarRevisaoOrcamento(orcamentoAtual, motivo) {
+            setLoading(true);
+            try {
+                let proximaRev = 'A';
+                if (orcamentoAtual.revisao) {
+                    proximaRev = String.fromCharCode(orcamentoAtual.revisao.charCodeAt(0) + 1);
+                }
+
+                const docRefAntigo = doc(db, `${ROOT_PATH}/orcamentos`, orcamentoAtual.firebaseId);
+                await updateDoc(docRefAntigo, { status: "HISTORICO" });
+
+                const novoOrcamento = JSON.parse(JSON.stringify(orcamentoAtual));
+                novoOrcamento.revisao = proximaRev;
+                novoOrcamento.data_criacao = serverTimestamp();
+                novoOrcamento.status = "ABERTO"; 
+                novoOrcamento.motivo_substituicao = motivo; 
+                
+                // LÓGICA DE PRESERVAÇÃO
+                if (!novoOrcamento.vendedor_original_email) {
+                    novoOrcamento.vendedor_original_email = orcamentoAtual.vendedor_email;
+                }
+
+                novoOrcamento.vendedor_email = estado.user.email;
+                novoOrcamento.vendedor_nome = estado.user.displayName;
+                
+                delete novoOrcamento.firebaseId; 
+                
+                const novoDocId = `${orcamentoAtual.id_visual}_${proximaRev}`;
+                await setDoc(doc(db, `${ROOT_PATH}/orcamentos`, novoDocId), novoOrcamento);
+
+                alert(`Orçamento Revisão ${proximaRev} gerado com sucesso!`);
+                await dbCarregarDadosCliente(estado.clienteAtivo.id);
+                voltarParaCliente();
+
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao criar revisão do orçamento: " + e.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // --- FUNÇÕES DE HISTÓRICO VISUAL ---
+        async function carregarHistoricoTrabalho(idVisualBase, tipo) {
+            const histList = document.getElementById('historico-lista');
+            
+            // Se já tinha um listener de histórico rodando, desliga ele antes de criar o novo
+            if (unsubHistorico) { unsubHistorico(); unsubHistorico = null; }
+
+            histList.innerHTML = "<p style='color:var(--text-secondary); padding:1rem;'>Carregando histórico em tempo real...</p>";
+            
+            const collectionName = (tipo === 'orcamento') ? 'orcamentos' : 'pedidos';
+
+            try {
+                const q = query(
+                    collection(db, `${ROOT_PATH}/${collectionName}`), 
+                    where("id_visual", "==", idVisualBase),
+                    orderBy("data_criacao", "desc")
+                );
+
+                // AQUI MUDA: De getDocs para onSnapshot
+                unsubHistorico = onSnapshot(q, (snapshot) => {
+                    histList.innerHTML = "";
+                    
+                    if (snapshot.empty) {
+                        histList.innerHTML = "<p style='padding:1rem; font-size:0.85rem; color:var(--text-secondary)'>Nenhum histórico anterior.</p>";
+                        return;
+                    }
+
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        const isCurrent = (doc.id === estado.trabalhoAtivo.firebaseId) ? 'current' : '';
+                        
+                        // Formatações
+                        const rev = d.revisao ? `Rev. ${d.revisao}` : "Versão Original";
+                        const status = d.status ? d.status.replace('_', ' ') : '---';
+                        const data = d.data_criacao ? new Date(d.data_criacao.seconds*1000).toLocaleString() : "-";
+                        const motivo = d.motivo_substituicao ? `<div class="history-reason">Motivo: "${d.motivo_substituicao}"</div>` : "";
+                        const vendedor = d.vendedor_nome ? ` • Por: ${d.vendedor_nome.split(' ')[0]}` : "";
+
+                        let badgeClass = 'badge-history';
+                        if (d.status === 'EM_PRODUCAO') badgeClass = 'badge-production';
+                        if (d.status === 'APROVADO' || d.status === 'ENTREGUE') badgeClass = 'badge-approved';
+                        if (d.status === 'ABERTO') badgeClass = 'badge-open';
+
+                        histList.innerHTML += `
+                            <div class="history-item ${isCurrent}" onclick="window.app.verPedidoHistorico('${collectionName}', '${doc.id}')">
+                                <div class="history-meta">${data}</div>
+                                <div class="history-content">
+                                    <h5>${rev} <span class="badge ${badgeClass}">${status}</span></h5>
+                                    <div style="font-size:0.85rem; color:var(--text-secondary)">Total: ${formatarMoeda(d.total)} • ${d.itens.length} itens ${vendedor}</div>
+                                    ${motivo}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }, (error) => {
+                    console.error("Erro no histórico:", error);
+                    histList.innerHTML = "<p style='color:red; padding:1rem'>Erro ao carregar histórico.</p>";
+                });
+
+            } catch (e) {
+                console.error(e);
+                histList.innerHTML = "<p style='color:red'>Erro crítico ao iniciar histórico.</p>";
+            }
+        }
+        
+        // --- APP CONTROLLER ---
+        window.app = {
+            // AUTH ACTIONS
+            loginGoogle: async () => {
+                try {
+                    const provider = new GoogleAuthProvider();
+                    
+                    // Esta configuração é a chave: Ela força o Google a SEMPRE perguntar 
+                    // qual conta usar, ignorando logins anteriores.
+                    provider.setCustomParameters({
+                        prompt: 'select_account'
+                    });
+
+                    // Abre o popup IMEDIATAMENTE após o clique (sem await antes)
+                    await signInWithPopup(auth, provider);
+
+                } catch (e) {
+                    console.error(e);
+                    if (e.code !== 'auth/popup-closed-by-user') {
+                        alert("Erro ao tentar fazer login: " + e.message);
+                    }
+                }
+            },
+            logoutGoogle: () => {
+                signOut(auth).then(() => window.location.reload());
+            },
+
+            irParaHome: () => { mostrarTela('view-home'); estado.clienteAtivo = null; },
+            
+            // Botão "Editar" do Pedido
+            solicitarEdicaoPedido: () => {
+                estado.acaoModal = 'EDITAR_PEDIDO'; 
+                document.getElementById('titulo-modal-motivo').innerText = "Editar Pedido (Criar Revisão)";
+                document.getElementById('revisao_motivo').value = "";
+                document.getElementById('modal-revisao').classList.remove('hidden');
+            },
+
+            // NOVA FUNÇÃO: Destrava o Orçamento para edição
+            ativarModoEdicao: () => {
+                estado.modoLeitura = false;
+                estado.editandoRevisao = true; // Marca que estamos mexendo num documento existente
+                atualizarEditorUI();
+            },
+
+            // NOVA FUNÇÃO: Cancela a edição e reverte alterações visuais
+            cancelarModoEdicao: () => {
+                if(estado.temAlteracoesNaoSalvas && !confirm("Descartar alterações não salvas?")) return;
+                
+                estado.modoLeitura = true;
+                estado.editandoRevisao = false;
+                estado.temAlteracoesNaoSalvas = false;
+
+                // Recarrega o dado original da memória (desfaz as mudanças na tela)
+                const colecao = estado.trabalhoAtivo.origem_orcamento_id ? estado.pedidos : estado.orcamentos;
+                const original = colecao.find(p => p.firebaseId === estado.trabalhoAtivo.firebaseId);
+                if(original) estado.trabalhoAtivo = JSON.parse(JSON.stringify(original));
+                
+                atualizarEditorUI();
+            },
+
+            confirmarInicioEdicao: () => {
+                const motivo = document.getElementById('revisao_motivo').value;
+                // Motivo opcional
+                
+                estado.motivoRevisaoTemporario = motivo;
+                estado.editandoRevisao = true;
+                estado.modoLeitura = false; // Desbloqueia form
+                
+                document.getElementById('modal-revisao').classList.add('hidden');
+                atualizarEditorUI(); // Atualiza botões e esconde histórico
+            },
+
+            concluirEdicaoRevisao: () => {
+                // VERIFICA SE É ORÇAMENTO OU PEDIDO PARA CHAMAR A FUNÇÃO CERTA
+                if (!estado.trabalhoAtivo.origem_orcamento_id) {
+                    // É Orçamento (pois não tem origem)
+                    dbGerarRevisaoOrcamento(estado.trabalhoAtivo, estado.motivoRevisaoTemporario);
+                } else {
+                    // É Pedido
+                    dbGerarRevisao(estado.trabalhoAtivo, estado.motivoRevisaoTemporario);
+                }
+            },
+
+            // Atualize esta função para aceitar 'tipo' (colecao)
+            verPedidoHistorico: async (colecao, firebaseId) => {
+                // Se não passar coleção (clique antigo), tenta adivinhar ou busca no array local
+                let item = null;
+                
+                if (colecao === 'orcamentos') {
+                    // Tenta achar na memória primeiro, se não busca no banco (caso seja histórico antigo não carregado)
+                    item = estado.orcamentos.find(o => o.firebaseId === firebaseId);
+                } else {
+                    item = estado.pedidos.find(p => p.firebaseId === firebaseId);
+                }
+
+                // Se não achou na memória (ex: histórico antigo), teria que buscar no banco individualmente
+                // Para simplificar, vamos assumir que se não achou, recarrega a página ou avisa.
+                // Mas geralmente o histórico traz dados básicos. Se quisermos abrir para ver, precisamos do objeto completo.
+                // Truque: O dbCarregarDadosCliente carrega TUDO (incluindo históricos se mudarmos o filtro, mas por padrão carrega).
+                // Se o histórico não estiver na lista principal, você precisaria de um getDoc(doc(db...)). 
+                // Por hora, vamos usar o que tem na memória.
+                
+                if (!item) {
+                    alert("Este item histórico não está carregado na memória no momento.");
+                    return;
+                }
+
+                estado.trabalhoAtivo = JSON.parse(JSON.stringify(item));
+                estado.modoLeitura = true; // Histórico é sempre leitura
+                estado.editandoRevisao = false;
+                atualizarEditorUI();
+                mostrarTela('view-editor');
+            },
+
+            // GESTÃO CLIENTE
+            abrirModalCliente: () => {
+                estado.clienteEmEdicaoId = null; // Garante que o sistema sabe que é um NOVO cadastro
+                document.getElementById('modal-titulo-cliente').innerText = "Novo Cliente";
+                
+                // ESCONDE o botão de excluir
+                document.getElementById('btn-excluir-cliente-modal').classList.add('hidden');
+
+                // LIMPEZA TOTAL DOS CAMPOS
+                document.getElementById('cli_nome').value = ""; 
+                document.getElementById('cli_email').value = ""; 
+                document.getElementById('cli_telefone').value = "";
+                
+                document.getElementById('modal-cliente').classList.remove('hidden');
+            },
+            editarClienteAtual: () => {
+                const cli = estado.clienteAtivo;
+                estado.clienteEmEdicaoId = cli.id;
+                document.getElementById('modal-titulo-cliente').innerText = "Editar Cliente";
+                
+                // MOSTRA o botão de excluir
+                document.getElementById('btn-excluir-cliente-modal').classList.remove('hidden');
+
+                document.getElementById('cli_nome').value = cli.nome; 
+                document.getElementById('cli_email').value = cli.email || ""; 
+                document.getElementById('cli_telefone').value = cli.telefone || "";
+                document.getElementById('modal-cliente').classList.remove('hidden');
+            },
+            salvarCliente: async () => {
+                const nome = document.getElementById('cli_nome').value;
+                const email = document.getElementById('cli_email').value;
+                const tel = document.getElementById('cli_telefone').value;
+                
+                if(!nome) return alert("Preencha o nome");
+                
+                setLoading(true);
+                try {
+                    const dados = { nome, email, telefone: tel };
+                    
+                    if(estado.clienteEmEdicaoId) {
+                        // EDIÇÃO
+                        const docRef = doc(db, `${ROOT_PATH}/clientes`, estado.clienteEmEdicaoId);
+                        await updateDoc(docRef, dados);
+                        estado.clienteAtivo = { ...estado.clienteAtivo, ...dados };
+                        atualizarInfoClienteHeader();
+                    } else {
+                        // CRIAÇÃO (NOVO)
+                        const idVisual = await getProximoId('cliente');
+                        const docId = String(idVisual);
+                        dados.id_visual = idVisual;
+                        dados.data_criacao = serverTimestamp();
+                        await setDoc(doc(db, `${ROOT_PATH}/clientes`, docId), dados);
+                    }
+                    
+                    // SUCESSO: Fecha modal, recarrega lista e LIMPA CAMPOS
+                    document.getElementById('modal-cliente').classList.add('hidden');
+                    
+                    // --- LIMPEZA DOS CAMPOS ---
+                    document.getElementById('cli_nome').value = "";
+                    document.getElementById('cli_email').value = "";
+                    document.getElementById('cli_telefone').value = "";
+                    
+                    dbCarregarClientes();
+                } catch(e) { 
+                    console.error(e); 
+                    alert("Erro ao salvar cliente"); 
+                } finally { 
+                    setLoading(false); 
+                }
+            },
+
+            excluirClienteAtual: async () => {
+                if(!confirm("ATENÇÃO: Tem certeza que deseja excluir esta empresa?\nIsso removerá o acesso à pasta.")) return;
+                setLoading(true);
+                try {
+                    await deleteDoc(doc(db, `${ROOT_PATH}/clientes`, estado.clienteAtivo.id));
+                    await decrementarId('cliente');
+                    
+                    // SUCESSO: Fecha modal, volta pra home e LIMPA CAMPOS
+                    document.getElementById('modal-cliente').classList.add('hidden');
+                    
+                    // --- LIMPEZA DOS CAMPOS ---
+                    document.getElementById('cli_nome').value = "";
+                    document.getElementById('cli_email').value = "";
+                    document.getElementById('cli_telefone').value = "";
+
+                    app.irParaHome();
+                    dbCarregarClientes();
+                } catch(e) { 
+                    console.error(e); 
+                    alert("Erro ao excluir"); 
+                } finally { 
+                    setLoading(false); 
+                }
+            },
+
+            // Aumenta o limite e recarrega os listeners
+            carregarMais: (tipo) => {
+                if (tipo === 'orcamento') {
+                    estado.limiteOrcamentos += LIMITE_ITENS;
+                } else {
+                    estado.limitePedidos += LIMITE_ITENS;
+                }
+                // Recarrega mantendo o cliente ativo
+                dbCarregarDadosCliente(estado.clienteAtivo.id);
+            },
+
+            // Executa a busca quando aperta Enter ou sai do campo
+            executarBuscaTrabalho: () => {
+                const valor = document.getElementById('input-busca-trabalho').value;
+                if(valor) {
+                    estado.termoBusca = valor;
+                } else {
+                    estado.termoBusca = null;
+                }
+                dbCarregarDadosCliente(estado.clienteAtivo.id);
+            },
+
+            // Botão "X" para limpar
+            limparBuscaTrabalho: () => {
+                document.getElementById('input-busca-trabalho').value = "";
+                estado.termoBusca = null;
+                // Reseta os limites para economizar dados
+                estado.limiteOrcamentos = LIMITE_ITENS;
+                estado.limitePedidos = LIMITE_ITENS;
+                dbCarregarDadosCliente(estado.clienteAtivo.id);
+            },
+
+            // TRABALHOS
+            criarNovoOrcamento: () => {
+                estado.trabalhoAtivo = { cliente_id: estado.clienteAtivo.id, cliente_nome: estado.clienteAtivo.nome, itens: [], valor_corte: 0, total: 0 };
+                estado.modoLeitura = false;
+                estado.itemEmEdicaoId = null;
+                atualizarEditorUI();
+                mostrarTela('view-editor');
+            },
+            // Botão "Salvar" do Orçamento/Pedido
+            salvarTrabalhoSmart: () => {
+                if(estado.trabalhoAtivo.itens.length === 0) return alert("Adicione itens!");
+
+                // CASO 1: É um Orçamento JÁ SALVO (não é rascunho novo)
+                // Ação: Abre o modal para pedir motivo e criar revisão
+                if (!estado.trabalhoAtivo.origem_orcamento_id && estado.trabalhoAtivo.id_visual) {
+                    estado.acaoModal = 'SALVAR_REV_ORCAMENTO';
+                    document.getElementById('titulo-modal-motivo').innerText = "Salvar Alterações (Nova Revisão)";
+                    document.getElementById('revisao_motivo').value = "";
+                    document.getElementById('modal-revisao').classList.remove('hidden');
+                    return;
+                }
+
+                // CASO 2: É PEDIDO (Identificado por ter origem_orcamento_id)
+                // CORREÇÃO: Removemos a verificação de ".revisao" aqui
+                if (estado.trabalhoAtivo.origem_orcamento_id) {
+                    // Se estamos editando (Modo Revisão), gera a nova revisão (A, B, C...)
+                    if (estado.editandoRevisao) {
+                        dbGerarRevisao(estado.trabalhoAtivo, estado.motivoRevisaoTemporario);
+                    } else {
+                        // Salva direto no mesmo documento (apenas segurança)
+                        salvarPedidoDireto();
+                    }
+                    return;
+                }
+
+                // CASO 3: É Orçamento Novo (Rascunho)
+                dbSalvarOrcamento(estado.trabalhoAtivo);
+            },
+            // Função chamada pelo botão do Modal
+            solicitarCancelamento: () => {
+                estado.acaoModal = 'CANCELAR_GERAL';
+                document.getElementById('titulo-modal-motivo').innerText = "Confirmar Cancelamento";
+                document.getElementById('revisao_motivo').value = "";
+                document.getElementById('revisao_motivo').placeholder = "Por que este trabalho está sendo cancelado?";
+                document.getElementById('modal-revisao').classList.remove('hidden');
+            },
+
+            // 2. ATUALIZE A FUNÇÃO confirmarAcaoModal PARA TRATAR O CANCELAMENTO:
+            confirmarAcaoModal: () => {
+                const motivo = document.getElementById('revisao_motivo').value.trim();
+
+                if (!motivo) {
+                    return alert("É obrigatório descrever o motivo.");
+                }
+
+                document.getElementById('modal-revisao').classList.add('hidden');
+
+                // --- LÓGICA DO CANCELAMENTO ---
+                if (estado.acaoModal === 'CANCELAR_GERAL') {
+                    dbCancelarComMotivo(estado.trabalhoAtivo, motivo);
+                    return; 
+                }
+                // -----------------------------
+
+                if (estado.acaoModal === 'EDITAR_PEDIDO') {
+                    estado.motivoRevisaoTemporario = motivo;
+                    estado.editandoRevisao = true;
+                    estado.modoLeitura = false; 
+                    atualizarEditorUI();
+                } 
+                else if (estado.acaoModal === 'SALVAR_REV_ORCAMENTO') {
+                    dbGerarRevisaoOrcamento(estado.trabalhoAtivo, motivo);
+                }
+            },
+            cancelarEdicaoRevisao: () => {
+                estado.editandoRevisao = false;
+                estado.modoLeitura = true;
+                const colecao = estado.trabalhoAtivo.origem_orcamento_id ? estado.pedidos : estado.orcamentos;
+                const original = colecao.find(p => p.firebaseId === estado.trabalhoAtivo.firebaseId);
+                if(original) estado.trabalhoAtivo = JSON.parse(JSON.stringify(original));
+                atualizarEditorUI();
+            },
+            recalcularComCorte: () => {
+                const valorCorte = parseFloat(document.getElementById('valor_corte_geral').value) || 0;
+                estado.trabalhoAtivo.valor_corte = valorCorte;
+                
+                // MARCA COMO ALTERADO
+                estado.temAlteracoesNaoSalvas = true; 
+                
+                recalcularTotalGeral();
+                renderizarTabelaItens();
+                // Força atualização dos botões (para bloquear o Aprovar visualmente)
+                atualizarEditorUI(); 
+                // Truque: Como atualizarEditorUI tira o foco, devolvemos o foco pro input
+                setTimeout(() => document.getElementById('valor_corte_geral').focus(), 50);
+            },
+            gerarPedidoAction: () => { dbGerarPedido(estado.trabalhoAtivo); },
+            cancelarOrcamentoAction: () => { dbAlterarStatus('orcamento', estado.trabalhoAtivo.firebaseId, 'CANCELADO'); },
+            cancelarPedidoAction: () => { dbAlterarStatus('pedido', estado.trabalhoAtivo.firebaseId, 'CANCELADO'); },
+            marcarEmProducaoAction: () => { dbAlterarStatus('pedido', estado.trabalhoAtivo.firebaseId, 'EM_PRODUCAO'); },
+            marcarProntoAction: () => { dbAlterarStatus('pedido', estado.trabalhoAtivo.firebaseId, 'PRONTO'); },
+            marcarEntregueAction: () => { dbAlterarStatus('pedido', estado.trabalhoAtivo.firebaseId, 'ENTREGUE'); },
+            processarItem: () => processarItemLogica(),
+            cancelarEdicaoItem: () => { estado.itemEmEdicaoId = null; limparFormularioItem(); atualizarBotoesFormulario(); },
+            atualizarPreview: () => atualizarPreviewTempoReal(),
+            mudarAba: (aba) => {
+                estado.tipoVisualizacao = aba;
+                localStorage.setItem('mag-ultima-aba', aba);
+                
+                // Atualiza visual dos botões de aba (Tab Header)
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById(`tab-${aba}`).classList.add('active');
+                
+                // MUDANÇA AQUI: Agora alternamos os containers inteiros (Lista + Botão)
+                if(aba === 'orcamentos') {
+                    document.getElementById('view-tab-orcamentos').classList.remove('hidden');
+                    document.getElementById('view-tab-pedidos').classList.add('hidden');
+                } else {
+                    document.getElementById('view-tab-orcamentos').classList.add('hidden');
+                    document.getElementById('view-tab-pedidos').classList.remove('hidden');
+                }
+            },
+            voltarParaCliente: () => voltarParaCliente()
+        };
+
+        // Função auxiliar necessária
+        function salvarPedidoDireto() {
+            setLoading(true);
+            const docRef = doc(db, `${ROOT_PATH}/pedidos`, estado.trabalhoAtivo.firebaseId);
+            updateDoc(docRef, { itens: estado.trabalhoAtivo.itens, total: estado.trabalhoAtivo.total, valor_corte: estado.trabalhoAtivo.valor_corte, vendedor_email: estado.user.email })
+            .then(() => { alert("Revisão salva com sucesso!"); dbCarregarDadosCliente(estado.clienteAtivo.id); voltarParaCliente(); })
+            .finally(() => setLoading(false));
+        }
+
+        
+        // --- RENDER ---
+        function setLoading(ativo) { document.getElementById('loading-overlay').style.display = ativo ? 'flex' : 'none'; }
+        function formatarMoeda(val) { const n = parseFloat(val) || 0; return n.toLocaleString('pt-BR', {style:'currency', currency:'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+        function round(num) { return Math.round((num + Number.EPSILON) * 100) / 100; }
+
+        function renderizarClientes() {
+            const grid = document.getElementById('grid-clientes'); grid.innerHTML = "";
+            estado.clientes.forEach(cli => {
+                grid.innerHTML += `<div class="client-folder" onclick="abrirCliente('${cli.id}')"><i class="ph ph-folder-notch folder-icon"></i><h3>${cli.nome}</h3><div class="client-stats"><span>Abrir Pasta</span></div></div>`;
+            });
+        }
+
+        window.abrirCliente = (id) => {
+            // RESET DE PAGINAÇÃO E BUSCA
+            estado.limiteOrcamentos = LIMITE_ITENS;
+            estado.limitePedidos = LIMITE_ITENS;
+            estado.termoBusca = null;
+            document.getElementById('input-busca-trabalho').value = "";
+
+            const cli = estado.clientes.find(c => c.id === id);
+            estado.clienteAtivo = cli;
+            atualizarInfoClienteHeader();
+            mostrarTela('view-client-details');
+            dbCarregarDadosCliente(id);
+            const abaSalva = localStorage.getItem('mag-ultima-aba') || 'orcamentos';
+            window.app.mudarAba(abaSalva);
+        };
+
+        function atualizarInfoClienteHeader() {
+            const cli = estado.clienteAtivo;
+            document.getElementById('titulo-cliente-nome').innerText = cli.nome;
+            let info = "";
+            if(cli.email) info += `<i class="ph ph-envelope"></i> ${cli.email} &nbsp;&nbsp; `;
+            if(cli.telefone) info += `<i class="ph ph-phone"></i> ${cli.telefone}`;
+            document.getElementById('cliente-info-detalhe').innerHTML = info;
+        }
+
+        function renderizarListasCliente() {
+            // --- RENDERIZA ORÇAMENTOS ---
+            const divOrc = document.getElementById('content-orcamentos'); divOrc.innerHTML = "";
+            
+            if(estado.orcamentos.length === 0) divOrc.innerHTML = "<p style='text-align:center;color:#666;padding:2rem'>Nenhum orçamento.</p>";
+            
+            estado.orcamentos.sort((a,b) => b.id_visual - a.id_visual).forEach(orc => {
+                // AQUI ESTÁ A MÁGICA: Se for histórico, não mostra na lista principal
+                if(orc.status === 'HISTORICO') return; 
+
+                let badge = `<span class="badge badge-open">ABERTO</span>`;
+                if(orc.status === 'APROVADO') badge = `<span class="badge badge-approved">APROVADO</span>`;
+                if(orc.status === 'CANCELADO') badge = `<span class="badge badge-canceled">CANCELADO</span>`;
+                
+                // Mostra a revisão se existir (Igual Pedidos)
+                const revTxt = orc.revisao ? ` <span style="font-size:0.8em; color:#888">/ Rev ${orc.revisao}</span>` : "";
+
+                divOrc.innerHTML += `<div class="list-item" onclick="abrirEditorExistente('orcamento', '${orc.firebaseId}')"><div class="item-info"><h4>#${orc.id_visual}${revTxt} ${badge}</h4><small>${orc.itens.length} itens • ${orc.data_criacao ? new Date(orc.data_criacao.seconds*1000).toLocaleDateString() : 'Hoje'}</small></div><strong style="color:var(--success)">${formatarMoeda(orc.total)}</strong></div>`;
+            });
+
+            // --- RENDERIZA PEDIDOS (MANTIDO IGUAL) ---
+            const divPed = document.getElementById('content-pedidos'); divPed.innerHTML = "";
+            
+            if(estado.pedidos.length === 0) divPed.innerHTML = "<p style='text-align:center;color:#666;padding:2rem'>Nenhum pedido fechado.</p>";
+            
+            estado.pedidos.sort((a,b) => b.id_visual - a.id_visual).forEach(ped => {
+                if(ped.status === 'HISTORICO') return;
+                
+                let badge = `<span class="badge badge-production">PRODUÇÃO</span>`;
+                if(ped.status === 'PRONTO') badge = `<span class="badge badge-ready">PRONTO</span>`;
+                if(ped.status === 'ENTREGUE') badge = `<span class="badge badge-approved">ENTREGUE</span>`;
+                if(ped.status === 'CANCELADO') badge = `<span class="badge badge-canceled">CANCELADO</span>`;
+                
+                const revTxt = ped.revisao ? ` / Rev ${ped.revisao}` : "";
+
+                divPed.innerHTML += `<div class="list-item" style="border-left: 3px solid var(--accent)" onclick="abrirEditorExistente('pedido', '${ped.firebaseId}')"><div class="item-info"><h4>PEDIDO #${ped.id_visual} <span style="font-size:0.8em; color:#888">${revTxt}</span> ${badge}</h4><small>Ref: Orç #${ped.origem_orcamento_id}</small></div><strong style="color:var(--text-primary)">${formatarMoeda(ped.total)}</strong></div>`;
+            });
+        }
+
+        window.abrirEditorExistente = (tipo, id) => {
+            estado.itemEmEdicaoId = null;
+            estado.temAlteracoesNaoSalvas = false; 
+
+            // Se já tinha um listener de editor, desliga ele
+            if (unsubEditor) { unsubEditor(); unsubEditor = null; }
+
+            // 1. Define qual coleção ler
+            const colecao = tipo === 'orcamento' ? 'orcamentos' : 'pedidos';
+
+            // 2. Inicia Listener em tempo real NO DOCUMENTO ÚNICO
+            // Isso faz a tela do Chefe atualizar sozinha se o Vendedor salvar
+            unsubEditor = onSnapshot(doc(db, `${ROOT_PATH}/${colecao}`, id), (docSnap) => {
+                if (docSnap.exists()) {
+                    const dadosAtualizados = { firebaseId: docSnap.id, ...docSnap.data() };
+                    
+                    // Só atualiza a tela se NÃO estivermos no meio de uma edição (para não limpar o que a pessoa está digitando)
+                    // OU se for a primeira carga
+                    if (estado.modoLeitura || !estado.trabalhoAtivo) {
+                        estado.trabalhoAtivo = JSON.parse(JSON.stringify(dadosAtualizados));
+                        atualizarEditorUI(); // Redesenha a tela com os dados novos do banco
+                    }
+                }
+            });
+
+            // Configurações iniciais de UI
+            if(tipo === 'orcamento') {
+                estado.modoLeitura = true; 
+                estado.editandoRevisao = false;
+            } else if (tipo === 'pedido') {
+                estado.modoLeitura = true; 
+                estado.editandoRevisao = false;
+            }
+            
+            mostrarTela('view-editor');
+        };
+
+        function atualizarEditorUI() {
+            const trab = estado.trabalhoAtivo;
+            
+            // --- ELEMENTOS DA TELA ---
+            const containerBotoes = document.getElementById('editor-actions');
+            const novoTitulo = document.getElementById('titulo_visual_id');
+            const breadTipo = document.getElementById('bread-tipo');
+            const formCard = document.getElementById('card-formulario');
+            const historicoContainer = document.getElementById('historico-container');
+            const inputCorte = document.getElementById('valor_corte_geral');
+            
+            // Prepara cabeçalho
+            containerBotoes.innerHTML = `<h2 id="titulo_visual_id" style="color: var(--accent); margin-right: 1rem;">---</h2>`;
+            document.getElementById('bread-cliente').innerText = estado.clienteAtivo.nome;
+            inputCorte.value = trab.valor_corte || "";
+            const revLabel = trab.revisao ? ` <span style="color:var(--text-secondary); font-size:0.6em">/ REV ${trab.revisao}</span>` : "";
+
+            // --- CORREÇÃO PRINCIPAL: INJETAR MOTIVO NO RESUMO (LADO DIREITO) ---
+            // Pega o rodapé do resumo (onde está o valor total)
+            const footerResumo = document.getElementById('geral_valor').parentElement;
+            let boxMotivoResumo = document.getElementById('box-motivo-resumo');
+            
+            // Se a caixa ainda não existe, cria ela dinamicamente
+            if (!boxMotivoResumo) {
+                boxMotivoResumo = document.createElement('div');
+                boxMotivoResumo.id = 'box-motivo-resumo';
+                
+                // Estilização direta para garantir destaque
+                boxMotivoResumo.style.marginBottom = '1.5rem';
+                boxMotivoResumo.style.padding = '1rem';
+                boxMotivoResumo.style.borderRadius = '8px';
+                boxMotivoResumo.style.fontSize = '0.9rem';
+                boxMotivoResumo.style.textAlign = 'left'; // Texto alinhado à esquerda para facilitar leitura
+                boxMotivoResumo.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'; // Fundo Vermelho Claro
+                boxMotivoResumo.style.border = '1px solid var(--danger)';
+                boxMotivoResumo.style.color = 'var(--danger)';
+                
+                // Insere no topo do rodapé do resumo
+                footerResumo.insertBefore(boxMotivoResumo, footerResumo.firstChild);
+            }
+
+            // Lógica de Exibição
+            if (trab.status === 'CANCELADO' && trab.motivo_cancelamento) {
+                boxMotivoResumo.classList.remove('hidden');
+                boxMotivoResumo.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem; font-weight:bold;">
+                        <i class="ph ph-warning-circle" style="font-size:1.2rem"></i> PEDIDO CANCELADO
+                    </div>
+                    <div style="opacity:0.9; font-style:italic;">"${trab.motivo_cancelamento}"</div>
+                `;
+            } else {
+                boxMotivoResumo.classList.add('hidden');
+            }
+            // ------------------------------------------------------------------
+
+            // CONTROLE DE MODO LEITURA (Esconde/Mostra Formulário)
+            if(estado.modoLeitura) {
+                formCard.classList.add('hidden'); 
+                inputCorte.disabled = true; 
+                document.getElementById('col-actions').innerHTML = ""; 
+            } else {
+                formCard.classList.remove('hidden'); 
+                inputCorte.disabled = false; 
+                document.getElementById('col-actions').innerHTML = ""; 
+            }
+
+            // Histórico
+            if (trab.id_visual) {
+                historicoContainer.classList.remove('hidden');
+                const tipo = trab.origem_orcamento_id ? 'pedido' : 'orcamento';
+                carregarHistoricoTrabalho(trab.id_visual, tipo);
+            } else { historicoContainer.classList.add('hidden'); }
+
+            // --- BOTÕES DE AÇÃO ---
+            // (Reinsere os botões baseado no estado)
+
+            if (!trab.id_visual) { 
+                // NOVO RASCUNHO
+                breadTipo.innerText = "Novo Orçamento"; 
+                containerBotoes.innerHTML += `<h2 style="color:var(--text-secondary)">RASCUNHO</h2>`;
+                containerBotoes.innerHTML += `<button class="btn-action btn-success" onclick="app.salvarTrabalhoSmart()"><i class="ph ph-check-circle-bold"></i> Salvar</button>`;
+            } 
+            else if (!trab.origem_orcamento_id) { 
+                // ORÇAMENTO EXISTENTE
+                breadTipo.innerText = "Orçamento"; 
+                const htmlTitulo = `ORÇAMENTO #${trab.id_visual}${revLabel}`;
+                
+                if (trab.status === 'ABERTO') {
+                    containerBotoes.innerHTML += `<h2 style="color:var(--accent); margin-right:1rem">${htmlTitulo}</h2>`;
+                    
+                    if (estado.modoLeitura) {
+                        containerBotoes.innerHTML += `
+                            <button class="btn-action btn-primary" onclick="app.gerarPedidoAction()"><i class="ph ph-thumbs-up-bold"></i> Aprovar / Gerar Pedido</button>
+                            <button class="btn-action btn-secondary" onclick="app.ativarModoEdicao()"><i class="ph ph-pencil-simple"></i> Editar</button>
+                            <button class="btn-action btn-danger" onclick="app.solicitarCancelamento()"><i class="ph ph-x-circle"></i> Cancelar Orç.</button>
+                        `;
+                    } else {
+                        containerBotoes.innerHTML += `<h2 style="color:var(--accent); margin-right:1rem">${htmlTitulo} <span class="badge badge-production">EDITANDO</span></h2>`;
+                        containerBotoes.innerHTML += `
+                            <button class="btn-action btn-success" onclick="app.salvarTrabalhoSmart()"><i class="ph ph-floppy-disk"></i> Salvar Alterações</button>
+                            <button class="btn-action btn-secondary" onclick="app.cancelarModoEdicao()">Cancelar Edição</button>
+                        `;
+                    }
+                } else {
+                    // APROVADO OU CANCELADO
+                    const cor = trab.status === 'APROVADO' ? 'var(--success)' : 'var(--text-secondary)';
+                    const badge = trab.status === 'APROVADO' ? 'badge-approved' : 'badge-canceled';
+                    containerBotoes.innerHTML += `<h2 style="color:${cor}; margin-right:1rem">${htmlTitulo} <span class="badge ${badge}">${trab.status}</span></h2>`;
+                }
+            }
+            else { 
+                // PEDIDO
+                breadTipo.innerText = "Pedido"; 
+                const htmlTitulo = `PEDIDO #${trab.id_visual}${revLabel}`;
+                
+                if (estado.editandoRevisao) {
+                    containerBotoes.innerHTML += `<h2 style="color:var(--accent); margin-right:1rem">${htmlTitulo} <span class="badge badge-production">EDITANDO REVISÃO</span></h2>`;
+                    containerBotoes.innerHTML += `
+                        <button class="btn-action btn-success" onclick="app.salvarTrabalhoSmart()"><i class="ph ph-floppy-disk"></i> Salvar Nova Revisão</button>
+                        <button class="btn-action btn-danger" onclick="app.cancelarModoEdicao()">Cancelar</button>
+                    `;
+                } else {
+                    if (trab.status === 'EM_PRODUCAO') {
+                        containerBotoes.innerHTML += `<h2 style="color:var(--accent); margin-right:1rem">${htmlTitulo}</h2>`;
+                        containerBotoes.innerHTML += `
+                            <button class="btn-action btn-purple" onclick="app.marcarProntoAction()"><i class="ph ph-check-square-offset"></i> Pronto</button>
+                            <button class="btn-action btn-success" onclick="app.marcarEntregueAction()"><i class="ph ph-package"></i> Entregar</button>
+                            <button class="btn-action btn-secondary" onclick="app.solicitarEdicaoPedido()"><i class="ph ph-pencil-simple-line"></i> Editar / Revisão</button>
+                            <button class="btn-action btn-danger" onclick="app.solicitarCancelamento()"><i class="ph ph-x-circle"></i> Cancelar</button>`;
+                    } 
+                    else if (trab.status === 'PRONTO') {
+                        containerBotoes.innerHTML += `<h2 style="color:#8b5cf6; margin-right:1rem">${htmlTitulo} <span class="badge badge-ready">PRONTO</span></h2>`;
+                        containerBotoes.innerHTML += `<button class="btn-action btn-success" onclick="app.marcarEntregueAction()"><i class="ph ph-package"></i> Entregar</button><button class="btn-action btn-secondary" onclick="app.marcarEmProducaoAction()"><i class="ph ph-arrow-u-up-left"></i> Retornar Produção</button>`;
+                    }
+                    else {
+                        // ENTREGUE OU CANCELADO
+                        const isCancelado = trab.status === 'CANCELADO';
+                        const badgeClass = isCancelado ? 'badge-canceled' : (trab.status === 'ENTREGUE' ? 'badge-approved' : 'badge-history');
+                        containerBotoes.innerHTML += `<h2 style="color:var(--text-secondary); margin-right:1rem">${htmlTitulo} <span class="badge ${badgeClass}">${trab.status}</span></h2>`;
+                    }
+                }
+            }
+            
+            limparFormularioItem(); 
+            renderizarTabelaItens();
+        }
+
+        const listaEspessuras = [ { label: "0.90 mm", valor: 0.90 }, { label: "1.00 mm", valor: 1.00 }, { label: "1.20 mm", valor: 1.20 }, { label: "1.50 mm", valor: 1.50 }, { label: "1.5875 mm (1/16\")", valor: 1.5875 }, { label: "2.00 mm", valor: 2.00 }, { label: "2.25 mm", valor: 2.25 }, { label: "2.65 mm", valor: 2.65 }, { label: "3.00 mm", valor: 3.00 }, { label: "3.175 mm (1/8\")", valor: 3.175 }, { label: "3.75 mm", valor: 3.75 }, { label: "4.75 mm", valor: 4.75 }, { label: "4.76 mm (3/16\")", valor: 4.76 }, { label: "5.00 mm", valor: 5.00 }, { label: "6.00 mm", valor: 6.00 }, { label: "6.35 mm (1/4\")", valor: 6.35 }, { label: "7.9375 mm (5/16\")", valor: 7.9375 }, { label: "8.00 mm", valor: 8.00 }, { label: "9.525 mm (3/8\")", valor: 9.525 }, { label: "10.00 mm", valor: 10.00 }, { label: "12.70 mm (1/2\")", valor: 12.70 }, { label: "16.00 mm", valor: 16.00 }, { label: "19.00 mm", valor: 19.00 }, { label: "22.00 mm", valor: 22.00 }, { label: "25.40 mm (1\")", valor: 25.40 } ];
+        function popularEspessuras() { const s = document.getElementById('espessura'); listaEspessuras.forEach(obj => { const o = document.createElement('option'); o.value = obj.valor; o.text = obj.label; s.appendChild(o); }); }
+        function atualizarPreviewTempoReal() {
+            const l = parseFloat(document.getElementById('largura').value)||0; const c = parseFloat(document.getElementById('comprimento').value)||0; const q = parseFloat(document.getElementById('quantidade').value)||0; const v = parseFloat(document.getElementById('valor_kg').value)||0; const p = parseFloat(document.getElementById('perda').value)||0; const dens = parseFloat(document.getElementById('material_tipo').value); const esp = parseFloat(document.getElementById('espessura').value); const selEsp = document.getElementById('espessura'); const espTxt = selEsp.options[selEsp.selectedIndex].text;
+            const vol = l*c*esp; const peso = ((vol/1e6)*dens*q)*(1+p/100); const total = peso * v;
+            document.getElementById('preview-valor').innerText = formatarMoeda(total);
+            return { l, c, q, v, p, dens, esp, espTxt, total };
+        }
+        function limparFormularioItem() { document.getElementById('peca_nome').value = ""; document.getElementById('peca_cod').value = ""; document.getElementById('largura').value = ""; document.getElementById('comprimento').value = ""; document.getElementById('quantidade').value = "1"; document.getElementById('valor_kg').value = ""; document.getElementById('preview-valor').innerText = "R$ 0,00"; document.getElementById('peca_nome').focus(); }
+        function processarItemLogica() {
+            // 1. Força a atualização dos cálculos
+            const calc = atualizarPreviewTempoReal();
+            
+            // 2. LEITURA DIRETA DOS INPUTS (Segurança Extra)
+            // Isso garante que o valor que você está vendo é o que será salvo
+            const qtdInput = parseFloat(document.getElementById('quantidade').value) || 0;
+            const totalInput = parseFloat(document.getElementById('preview-valor').innerText.replace('R$','').replace('.','').replace(',','.').trim()) || 0;
+
+            if(calc.total === 0 || qtdInput === 0) return alert("Preencha as medidas e a quantidade.");
+
+            const descMat = document.getElementById('material_tipo').options[document.getElementById('material_tipo').selectedIndex].text;
+
+            // 3. CRIAÇÃO DO ITEM
+            const novoItem = {
+                id: Date.now(), // ID temporário (será substituído se for edição)
+                peca: document.getElementById('peca_nome').value || "Peça",
+                cod: document.getElementById('peca_cod').value,
+                desc: `${descMat} ${calc.espTxt}`,
+                detalhe: `${calc.l}x${calc.c}mm`,
+                
+                // AQUI ESTÁ A CORREÇÃO: Usamos o valor direto do Input
+                qtd: qtdInput, 
+                total: round(calc.total),
+                
+                // Guardamos os dados crus para poder editar depois
+                raw: {
+                    largura: calc.l,
+                    comprimento: calc.c,
+                    qtd: qtdInput, // Garante que ao reabrir edição venha o número certo
+                    perda: calc.p,
+                    valor_kg: calc.v,
+                    dens: calc.dens,
+                    esp: calc.esp
+                }
+            };
+
+            // 4. LÓGICA DE ATUALIZAÇÃO OU INSERÇÃO
+            if (estado.itemEmEdicaoId) {
+                // Modo Edição: Substitui o item existente
+                const idx = estado.trabalhoAtivo.itens.findIndex(i => i.id === estado.itemEmEdicaoId);
+                if (idx !== -1) {
+                    novoItem.id = estado.itemEmEdicaoId; // Mantém o ID original
+                    estado.trabalhoAtivo.itens[idx] = novoItem;
+                }
+                estado.itemEmEdicaoId = null;
+                atualizarBotoesFormulario();
+            } else {
+                // Modo Novo: Adiciona na lista
+                estado.trabalhoAtivo.itens.push(novoItem);
+            }
+
+            estado.temAlteracoesNaoSalvas = true;
+
+            // 5. LIMPEZA E RENDERIZAÇÃO
+            limparFormularioItem();
+            recalcularTotalGeral();
+            renderizarTabelaItens();
+            atualizarEditorUI(); // Atualiza para bloquear o botão Aprovar
+        }
+        window.editarItem = (idx) => {
+            const item = estado.trabalhoAtivo.itens[idx];
+            estado.itemEmEdicaoId = item.id;
+            document.getElementById('peca_nome').value = item.peca; document.getElementById('peca_cod').value = item.cod || '';
+            if (item.raw) { document.getElementById('largura').value = item.raw.largura; document.getElementById('comprimento').value = item.raw.comprimento; document.getElementById('quantidade').value = item.raw.qtd; document.getElementById('perda').value = item.raw.perda; document.getElementById('valor_kg').value = item.raw.valor_kg; document.getElementById('material_tipo').value = item.raw.dens; document.getElementById('espessura').value = item.raw.esp; }
+            atualizarBotoesFormulario(); atualizarPreviewTempoReal();
+        };
+        function atualizarBotoesFormulario() {
+            const btnSubmit = document.getElementById('btn-submit-item'); const btnCancel = document.getElementById('btn-cancelar-edicao');
+            if (estado.itemEmEdicaoId) { btnSubmit.innerHTML = '<i class="ph ph-arrows-clockwise"></i> ATUALIZAR'; btnSubmit.classList.add('editing'); btnCancel.classList.remove('hidden'); } 
+            else { btnSubmit.innerHTML = '<i class="ph ph-plus-circle-bold"></i> INSERIR ITEM'; btnSubmit.classList.remove('editing'); btnCancel.classList.add('hidden'); }
+        }
+        function recalcularTotalGeral() { 
+            const totalItens = estado.trabalhoAtivo.itens.reduce((acc, i) => acc + i.total, 0); const valorCorte = parseFloat(estado.trabalhoAtivo.valor_corte) || 0; estado.trabalhoAtivo.total = round(totalItens + valorCorte); 
+        }
+        function renderizarTabelaItens() {
+            const tbody = document.getElementById('tabela-itens'); tbody.innerHTML = ""; const isLeitura = estado.modoLeitura;
+            estado.trabalhoAtivo.itens.forEach((i, idx) => {
+                const acoes = isLeitura ? '' : `<div style="display:flex; justify-content:flex-end; gap:0.5rem"><button class="btn-action btn-secondary" onclick="window.editarItem(${idx})"><i class="ph ph-pencil-simple"></i></button><button class="btn-action btn-danger" onclick="window.removerItem(${idx})"><i class="ph ph-trash"></i></button></div>`;
+                tbody.innerHTML += `<tr><td><strong>${i.peca}</strong> <small style="color:var(--text-secondary)">${i.cod ? `(${i.cod})` : ''}</small><br><span style='color:#888;font-size:0.8rem'>${i.desc} - ${i.detalhe}</span></td><td>${i.qtd}</td><td style='color:var(--success)'>${formatarMoeda(i.total)}</td><td>${acoes}</td></tr>`;
+            });
+            const corte = parseFloat(estado.trabalhoAtivo.valor_corte) || 0;
+            if(corte > 0) { document.getElementById('display-servico').innerText = `Itens + Serviço de Corte (${formatarMoeda(corte)})`; } else { document.getElementById('display-servico').innerText = ""; }
+            document.getElementById('geral_valor').innerText = formatarMoeda(estado.trabalhoAtivo.total);
+        }
+        window.removerItem = (idx) => { 
+            if(confirm("Remover item?")) { 
+                estado.trabalhoAtivo.itens.splice(idx, 1); 
+                
+                // MARCA COMO ALTERADO
+                estado.temAlteracoesNaoSalvas = true;
+                
+                if (estado.itemEmEdicaoId) window.app.cancelarEdicaoItem(); 
+                recalcularTotalGeral(); 
+                renderizarTabelaItens(); 
+                atualizarEditorUI(); // Bloqueia botão Aprovar
+            } 
+        };
+        window.mostrarTela = (id) => { document.querySelectorAll('section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); };
+        window.voltarParaCliente = () => { 
+            // Limpa listener do editor (dados principais)
+            if (window.unsubEditor) { window.unsubEditor(); window.unsubEditor = null; } 
+            
+            // Limpa listener do histórico (linha do tempo) <--- NOVO
+            if (unsubHistorico) { unsubHistorico(); unsubHistorico = null; }
+
+            mostrarTela('view-client-details'); 
+            const abaSalva = localStorage.getItem('mag-ultima-aba') || 'orcamentos'; 
+            window.app.mudarAba(abaSalva); 
+        };
+        window.filtrarClientes = (v) => { document.querySelectorAll('.client-folder').forEach(d => d.style.display = d.innerText.toLowerCase().includes(v.toLowerCase()) ? 'flex' : 'none'); };
+        window.abrirModalCliente = () => document.getElementById('modal-cliente').classList.remove('hidden');
+        window.fecharModalCliente = () => document.getElementById('modal-cliente').classList.add('hidden');
+
+        // Expor funções para HTML
+        window.app.verPedidoHistorico = window.app.verPedidoHistorico;
+
+        // popularEspessuras() e dbCarregarClientes() já são chamados no onAuthStateChanged
+    </script>
+</body>
+</html>
