@@ -124,6 +124,64 @@
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
         th { text-align: left; padding: 1rem; background: var(--bg-input); color: var(--text-secondary); }
         td { padding: 1rem; border-bottom: 1px solid var(--border); }
+
+        /* --- ESTILOS DE IMPRESSÃO (PROFISSIONAL) --- */
+        @media print {
+            /* Esconde TUDO da tela normal */
+            body * { visibility: hidden; }
+            #view-login, .app-container, #loading-overlay, .modal { display: none !important; }
+
+            /* Mostra e estiliza APENAS a área de impressão */
+            #print-area, #print-area * { 
+                visibility: visible; 
+            }
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white;
+                color: black;
+                padding: 20px;
+                display: block !important;
+            }
+
+            /* Reset de cores para o papel */
+            body { background: white !important; color: black !important; }
+            
+            /* Tabela de Impressão */
+            .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            .print-table th { background-color: #eee !important; color: black !important; font-weight: bold; border-bottom: 2px solid #000; text-align: left; padding: 8px; -webkit-print-color-adjust: exact; }
+            .print-table td { border-bottom: 1px solid #ccc; padding: 8px; color: black; }
+            
+            /* Cabeçalho e Rodapé */
+            .print-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px; }
+            .print-logo { height: 60px; filter: invert(0) !important; } /* Garante logo normal */
+            .print-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 20px; }
+            .print-box { border: 1px solid #ccc; padding: 10px; border-radius: 4px; }
+            .print-box h3 { font-size: 0.9rem; text-transform: uppercase; color: #555; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 3px; }
+            
+            /* Totais */
+            .print-footer { margin-top: 30px; display: flex; justify-content: flex-end; }
+            .print-totals { width: 250px; text-align: right; }
+            .print-row { display: flex; justify-content: space-between; padding: 5px 0; }
+            .print-total-final { font-size: 1.2rem; font-weight: bold; border-top: 2px solid #000; margin-top: 5px; padding-top: 5px; }
+
+            /* Assinatura */
+            .print-signature { margin-top: 60px; display: flex; justify-content: space-between; page-break-inside: avoid; }
+            .sign-line { width: 40%; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 0.8rem; }
+
+            .print-table th, .print-box {
+                /* Padrão moderno (Firefox, Chrome novo, Edge) */
+                print-color-adjust: exact; 
+                
+                /* Padrão antigo (Webkit/Chrome antigo/Safari) */
+                -webkit-print-color-adjust: exact; 
+            }
+        }
+        
+        /* Esconde a área de impressão na tela normal */
+        #print-area { display: none; }
     </style>
 </head>
 <body>
@@ -244,6 +302,13 @@
                     </div>
 
                     <div style="background: var(--bg-input); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--border);">
+                        
+                        <div class="input-box" style="margin-bottom: 1rem;">
+                            <label style="color:var(--accent);">Nome do Projeto / Referência</label>
+                            <input type="text" id="nome_projeto_input" placeholder="Ex: Portão da Fazenda, Grade Frente..." 
+                                   oninput="app.atualizarNomeProjeto(this.value)" style="font-weight: bold; border-bottom: 1px solid #444;">
+                        </div>
+
                         <div class="input-box">
                             <label style="color:var(--accent);">Valor Corte / Serviço (R$)</label>
                             <input type="number" id="valor_corte_geral" placeholder="0.00" style="font-size: 1.2rem; font-weight: bold;" oninput="app.recalcularComCorte()">
@@ -353,6 +418,76 @@
         </div>
     </div>
 
+    <div id="print-area">
+        <div class="print-header">
+            <div>
+                <img src="../sistema_orcamentos/images/MAG_Logo.png" class="print-logo" alt="Logo">
+                <div style="margin-top:10px; font-size:0.9rem;">
+                    <strong>MAG Indústria Equipamentos</strong><br>
+                    Av. Z - Distrito Industrial, Cuiabá - MT, 78049-903<br>
+                    Tel: (65)999969692 | erick@magco.com.br
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <h1 id="print-tipo-num" style="font-size: 2rem; margin-bottom: 5px;">ORÇAMENTO #000</h1>
+                
+                <p id="print-projeto" style="font-weight:bold; font-size: 1.1rem; margin-bottom: 10px; text-transform:uppercase">REF: ---</p>
+                
+                <p id="print-data">Data: 01/01/2026</p>
+                <p id="print-vendedor" style="font-size:0.9rem; color:#555">Vendedor: Nome</p>
+                <div id="print-status-badge" style="margin-top:5px; font-weight:bold; border:1px solid #000; display:inline-block; padding:2px 8px; border-radius:4px">STATUS</div>
+            </div>
+        </div>
+
+        <div class="print-info-grid">
+            <div class="print-box">
+                <h3>Cliente</h3>
+                <strong id="print-cli-nome" style="font-size:1.1rem">Nome do Cliente</strong><br>
+                <span id="print-cli-email">email@cliente.com</span><br>
+                <span id="print-cli-tel">(00) 0000-0000</span>
+            </div>
+            <div class="print-box">
+                <h3>Observações / Condições</h3>
+                <p style="font-size:0.9rem; color:#333;">
+                    Validade da proposta: 7 dias.<br>
+                    Prazo de entrega: A combinar.<br>
+                    Pagamento: 50% entrada + 50% na entrega.
+                </p>
+            </div>
+        </div>
+
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th width="5%">#</th>
+                    <th>Descrição / Peça</th>
+                    <th width="15%">Detalhes</th>
+                    <th width="10%">Qtd</th>
+                    <th width="15%">Total</th>
+                </tr>
+            </thead>
+            <tbody id="print-lista-itens">
+                </tbody>
+        </table>
+
+        <div class="print-footer">
+            <div class="print-totals">
+                <div class="print-row"><span>Soma Itens:</span> <span id="print-soma-itens">R$ 0,00</span></div>
+                <div class="print-row"><span>Serviço/Corte:</span> <span id="print-servico">R$ 0,00</span></div>
+                <div class="print-row print-total-final"><span>TOTAL:</span> <span id="print-total-geral">R$ 0,00</span></div>
+            </div>
+        </div>
+
+        <div class="print-signature">
+            <div class="sign-line">Assinatura MAG</div>
+            <div class="sign-line">De Acordo (Cliente)</div>
+        </div>
+        
+        <div style="margin-top:30px; font-size:0.8rem; text-align:center; color:#999">
+            Documento gerado eletronicamente em <span id="print-footer-data"></span>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { onSnapshot, getFirestore, collection, setDoc, getDocs, doc, deleteDoc, updateDoc, query, where, orderBy, runTransaction, serverTimestamp } 
@@ -408,6 +543,7 @@
             if (user) {
                 // 1. LISTA DE QUEM PODE ENTRAR (EDITE AQUI)
                 const EMAILS_PERMITIDOS = [
+                    EMAIL_MESTRE,
                     "vendedor1@gmail.com",
                     "vendedor2@gmail.com",
                     "g.araujoveroneze@gmail.com",
@@ -1247,6 +1383,10 @@
                 // Truque: Como atualizarEditorUI tira o foco, devolvemos o foco pro input
                 setTimeout(() => document.getElementById('valor_corte_geral').focus(), 50);
             },
+            atualizarNomeProjeto: (valor) => {
+                estado.trabalhoAtivo.nome_projeto = valor;
+                estado.temAlteracoesNaoSalvas = true;
+            },
             gerarPedidoAction: () => { dbGerarPedido(estado.trabalhoAtivo); },
             cancelarOrcamentoAction: () => { dbAlterarStatus('orcamento', estado.trabalhoAtivo.firebaseId, 'CANCELADO'); },
             cancelarPedidoAction: () => { dbAlterarStatus('pedido', estado.trabalhoAtivo.firebaseId, 'CANCELADO'); },
@@ -1273,7 +1413,67 @@
                     document.getElementById('view-tab-pedidos').classList.remove('hidden');
                 }
             },
-            voltarParaCliente: () => voltarParaCliente()
+            voltarParaCliente: () => voltarParaCliente(),
+
+            // --- FUNÇÃO DE IMPRESSÃO ---
+            imprimirTrabalho: () => {
+                const trab = estado.trabalhoAtivo;
+                const cli = estado.clienteAtivo;
+                
+                // 1. Preencher Cabeçalho
+                const tipo = trab.origem_orcamento_id ? "PEDIDO" : "ORÇAMENTO";
+                const rev = trab.revisao ? ` - REV ${trab.revisao}` : "";
+                document.getElementById('print-tipo-num').innerText = `${tipo} #${trab.id_visual}${rev}`;
+
+                // --- NOVO: PREENCHER PROJETO ---
+                const projetoTexto = trab.nome_projeto ? trab.nome_projeto.toUpperCase() : "---";
+                document.getElementById('print-projeto').innerText = `REF: ${projetoTexto}`;
+                
+                // Data formatada
+                const dataCriacao = trab.data_criacao ? new Date(trab.data_criacao.seconds * 1000).toLocaleDateString() : new Date().toLocaleDateString();
+                document.getElementById('print-data').innerText = `Data: ${dataCriacao}`;
+                document.getElementById('print-footer-data').innerText = new Date().toLocaleString();
+                
+                // Vendedor e Status
+                document.getElementById('print-vendedor').innerText = `Vendedor: ${trab.vendedor_nome || '---'}`;
+                document.getElementById('print-status-badge').innerText = trab.status;
+
+                // 2. Preencher Cliente
+                document.getElementById('print-cli-nome').innerText = cli.nome;
+                document.getElementById('print-cli-email').innerText = cli.email || "";
+                document.getElementById('print-cli-tel').innerText = cli.telefone || "";
+
+                // 3. Preencher Tabela de Itens
+                const tbody = document.getElementById('print-lista-itens');
+                tbody.innerHTML = "";
+                let somaItens = 0;
+
+                trab.itens.forEach((item, index) => {
+                    somaItens += item.total;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>
+                                <strong>${item.peca}</strong><br>
+                                <span style="font-size:0.8rem; color:#555">${item.desc}</span>
+                                ${item.cod ? `<br><small>Cód: ${item.cod}</small>` : ''}
+                            </td>
+                            <td>${item.detalhe}</td>
+                            <td>${item.qtd}</td>
+                            <td>${formatarMoeda(item.total)}</td>
+                        </tr>
+                    `;
+                });
+
+                // 4. Totais
+                const servico = parseFloat(trab.valor_corte) || 0;
+                document.getElementById('print-soma-itens').innerText = formatarMoeda(somaItens);
+                document.getElementById('print-servico').innerText = formatarMoeda(servico);
+                document.getElementById('print-total-geral').innerText = formatarMoeda(trab.total);
+
+                // 5. Chamar Impressão do Navegador
+                window.print();
+            },
         };
 
         // Função auxiliar necessária
@@ -1409,11 +1609,13 @@
             const formCard = document.getElementById('card-formulario');
             const historicoContainer = document.getElementById('historico-container');
             const inputCorte = document.getElementById('valor_corte_geral');
+            const inputProjeto = document.getElementById('nome_projeto_input');
             
             // Prepara cabeçalho
             containerBotoes.innerHTML = `<h2 id="titulo_visual_id" style="color: var(--accent); margin-right: 1rem;">---</h2>`;
             document.getElementById('bread-cliente').innerText = estado.clienteAtivo.nome;
             inputCorte.value = trab.valor_corte || "";
+            inputProjeto.value = trab.nome_projeto || "";
             const revLabel = trab.revisao ? ` <span style="color:var(--text-secondary); font-size:0.6em">/ REV ${trab.revisao}</span>` : "";
 
             // --- CORREÇÃO PRINCIPAL: INJETAR MOTIVO NO RESUMO (LADO DIREITO) ---
@@ -1457,11 +1659,13 @@
             // CONTROLE DE MODO LEITURA (Esconde/Mostra Formulário)
             if(estado.modoLeitura) {
                 formCard.classList.add('hidden'); 
-                inputCorte.disabled = true; 
+                inputCorte.disabled = true;
+                inputProjeto.disabled = true;
                 document.getElementById('col-actions').innerHTML = ""; 
             } else {
                 formCard.classList.remove('hidden'); 
-                inputCorte.disabled = false; 
+                inputCorte.disabled = false;
+                inputProjeto.disabled = false;
                 document.getElementById('col-actions').innerHTML = ""; 
             }
 
@@ -1474,6 +1678,8 @@
 
             // --- BOTÕES DE AÇÃO ---
             // (Reinsere os botões baseado no estado)
+
+            const btnImprimir = `<button class="btn-action btn-secondary" onclick="app.imprimirTrabalho()" title="Imprimir PDF"><i class="ph ph-printer"></i> Imprimir</button>`;
 
             if (!trab.id_visual) { 
                 // NOVO RASCUNHO
@@ -1491,6 +1697,7 @@
                     
                     if (estado.modoLeitura) {
                         containerBotoes.innerHTML += `
+                            ${btnImprimir}
                             <button class="btn-action btn-primary" onclick="app.gerarPedidoAction()"><i class="ph ph-thumbs-up-bold"></i> Aprovar / Gerar Pedido</button>
                             <button class="btn-action btn-secondary" onclick="app.ativarModoEdicao()"><i class="ph ph-pencil-simple"></i> Editar</button>
                             <button class="btn-action btn-danger" onclick="app.solicitarCancelamento()"><i class="ph ph-x-circle"></i> Cancelar Orç.</button>
@@ -1507,6 +1714,7 @@
                     const cor = trab.status === 'APROVADO' ? 'var(--success)' : 'var(--text-secondary)';
                     const badge = trab.status === 'APROVADO' ? 'badge-approved' : 'badge-canceled';
                     containerBotoes.innerHTML += `<h2 style="color:${cor}; margin-right:1rem">${htmlTitulo} <span class="badge ${badge}">${trab.status}</span></h2>`;
+                    containerBotoes.innerHTML += `${btnImprimir}`;
                 }
             }
             else { 
@@ -1517,10 +1725,12 @@
                 if (estado.editandoRevisao) {
                     containerBotoes.innerHTML += `<h2 style="color:var(--accent); margin-right:1rem">${htmlTitulo} <span class="badge badge-production">EDITANDO REVISÃO</span></h2>`;
                     containerBotoes.innerHTML += `
+                        ${btnImprimir}
                         <button class="btn-action btn-success" onclick="app.salvarTrabalhoSmart()"><i class="ph ph-floppy-disk"></i> Salvar Nova Revisão</button>
                         <button class="btn-action btn-danger" onclick="app.cancelarModoEdicao()">Cancelar</button>
                     `;
                 } else {
+                    containerBotoes.innerHTML += `${btnImprimir}`;
                     if (trab.status === 'EM_PRODUCAO') {
                         containerBotoes.innerHTML += `<h2 style="color:var(--accent); margin-right:1rem">${htmlTitulo}</h2>`;
                         containerBotoes.innerHTML += `
